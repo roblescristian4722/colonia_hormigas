@@ -60,11 +60,11 @@ ants = generate_ants(domain)
 best = 0
 bestGlobal = []
 bestDim = [ [] for _ in range(dimensions) ]
+
 minimums = []
 for i in range(len(domain)):
     tmp = domain[i][0][0]
     for k, _ in domain[i]:
-        print(k)
         if k < 0:
             if k > tmp:
                 tmp = k
@@ -142,8 +142,14 @@ for i in range(dimensions):
     fig.suptitle('Optimización por colonia de hormigas continua', fontweight='bold')
     ax.set_title('Evolución de las hormigas (por dimensión)')
     ax.set_xlabel('Cantidad de generaciones')
-    ax.set_ylabel('Evolución de la solución de la dimensión (local)')
+    ax.set_ylabel(f'Evolución de la solución de la dimensión {i + 1}/{dimensions} (local)')
     plt.plot(range(generations), bestDim[i], 'b-', label='Evolución de la solución de la dimensión (local)')
+    tmpX = 0
+    for j in range(len(bestDim)):
+        if bestDim[i][j] == bestGlobal[i]:
+            tmpX = j
+    ants.sort(key=lambda x: x[0])
+    plt.plot(generations - 1, ants[i][0], 'r*', label="Mejor solución encontrada")
     plt.plot([ minimums[i] for _ in range(generations)], 'g--', \
             label='Valor óptimo (mínimo local de la dimensión)')
     ax.legend()
