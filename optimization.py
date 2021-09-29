@@ -41,11 +41,11 @@ def greatest(x: list):
     return gr
 
 # Datos iniciales
-generations = 100
+generations = 200
 domStart = -10
 domEnd = 10
-poblationSize = 4000
-dimensions = 100
+poblationSize = 400
+dimensions = 10
 # Tasa de evaportación
 ro = 0.01
 increment = (abs(domStart) + abs(domEnd)) / (poblationSize - 1)
@@ -58,6 +58,29 @@ domain = get_intervals(domain, dimensions, poblationSize, tao)
 
 ants = generate_ants(domain)
 best = 0
+bestGlobal = []
+bestDim = [ [] for _ in range(dimensions) ]
+minimums = []
+for i in range(len(domain)):
+    tmp = domain[i][0][0]
+    for k, _ in domain[i]:
+        print(k)
+        if k < 0:
+            if k > tmp:
+                tmp = k
+        else:
+            if k < tmp:
+                tmp = k
+    minimums.append(tmp)
+
+print("Datos iniciales:")
+print("Generaciones: ", generations)
+print("Cantidad de caminos (dominio): ", poblationSize)
+print(f"Valores del dominio: [{domStart}, {domEnd}]")
+print("Dimensiones (cantidad en la que se divide el dominio): ", dimensions)
+print("Número de feromonas inicial en todos los caminos (tao): ", tao)
+print("Tasa de evaporación (ro): ", ro)
+print("Constante de aprendizaje (Q): ", Q)
 
 for g in range(generations):
     for i in range(len(domain)):
@@ -71,6 +94,7 @@ for g in range(generations):
             probStart += domain[i][j][1]
             if probStart >= probRate:
                 ants[i] = domain[i][j]
+                bestDim[i].append(ants[i][0])
                 break
 
     for i in range(len(domain)):
@@ -100,13 +124,49 @@ for g in range(generations):
         prevTao = ants[i][1]
         probStart += ants[i][1]
         if probStart >= probRate and not found:
-            best = ants[i]
+            best = ants[i][0]
             found = True
+            bestGlobal.append(best)
             ants[i][1] = Q / (absolute(ants[i][0]))
         else:
             ants[i][1] = 0
         ants[i][1] = ( (1 - ro) * ants[i][1] ) + prevTao
     ants.sort(key=lambda x: x[1], reverse=True)
-    print(f"best ({g}): {best}")
 
-# print(ants)
+print(f"Mejor valor (global): {best}")
+
+plt.figure()
+for i in range(dimensions):
+    fig = plt.figure()
+    ax = fig.add_subplot()
+    fig.suptitle('Optimización por colonia de hormigas continua', fontweight='bold')
+    ax.set_title('Evolución de las hormigas (por dimensión)')
+    ax.set_xlabel('Cantidad de generaciones')
+    ax.set_ylabel('Evolución de la solución de la dimensión (local)')
+    plt.plot(range(generations), bestDim[i], 'b-', label='Evolución de la solución de la dimensión (local)')
+    plt.plot([ minimums[i] for _ in range(generations)], 'g--', \
+            label='Valor óptimo (mínimo local de la dimensión)')
+    ax.legend()
+    plt.show()
+
+fig = plt.figure()
+ax = fig.add_subplot()
+fig.suptitle('Optimización por colonia de hormigas continua')
+ax.set_title('Evolución de la hormiga (de manera global)')
+ax.set_xlabel('Cantidad de generaciones')
+ax.set_ylabel('Evolución de la solución global')
+plt.plot([0 for _ in range(generations)], 'g--', label='Valor óptimo (mínimo global)')
+plt.plot([ bestGlobal[i] for i in range(len(bestGlobal))], 'b-', label='Evolución de la ruta de la hormiga')
+tmpMin = max(bestGlobal)
+tmpX = 0
+for i in range(len(bestGlobal)):
+    if bestGlobal[i] < abs(tmpMin):
+        tmpMin = bestGlobal[i]
+        tmpX = i
+    elif bestGlobal[i] == abs(tmpMin):
+        break
+
+plt.plot(tmpX, tmpMin, 'r*', label="Mejor solución encontrada")
+plt.plot(len(bestGlobal) - 1, bestGlobal[len(bestGlobal) - 1], 'r+', label="Última solución encontrada")
+ax.legend()
+plt.show()
