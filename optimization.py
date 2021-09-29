@@ -41,11 +41,11 @@ def greatest(x: list):
     return gr
 
 # Datos iniciales
-generations = 200
+generations = 100
 domStart = -10
 domEnd = 10
-poblationSize = 400
-dimensions = 50
+poblationSize = 4000
+dimensions = 100
 # Tasa de evaportación
 ro = 0.01
 increment = (abs(domStart) + abs(domEnd)) / (poblationSize - 1)
@@ -66,10 +66,7 @@ for g in range(generations):
             domain[i][j][1] /= taoSum
         probStart = 0
         probRate = random()
-        if g <= 10:
-            domain[i].sort(key=lambda x: absolute(x[0]))
-        else:
-            domain[i].sort(key=lambda x: x[1])
+        domain[i].sort(key=lambda x: x[1], reverse=True)
         for j in range(len(domain[i])):
             probStart += domain[i][j][1]
             if probStart >= probRate:
@@ -78,16 +75,15 @@ for g in range(generations):
 
     for i in range(len(domain)):
         for j in range(len(domain[i])):
+            prevTao = domain[i][j][0]
             if domain[i][j] in ants:
                 try:
-                    domain[i][j][1] = Q / (1 / absolute(domain[i][j][1]))
+                    domain[i][j][1] = Q / (absolute(domain[i][j][0]))
                 except ZeroDivisionError:
-                    domain[i][j][1] = Q / (1 / 0.0000000000000001)
+                    domain[i][j][1] = Q / (1 / 0.00001)
             else:
                 domain[i][j][1] = 0
-        taoSum = inner_sum(domain[i])
-        for j in range(len(domain[i])):
-            domain[i][j][1] = ( (1 - ro) * domain[i][j][1] ) + taoSum
+            domain[i][j][1] = ( (1 - ro) * domain[i][j][1] ) + prevTao
 
 for i in range(len(ants)):
     ants[i][1] = tao
@@ -98,21 +94,19 @@ for g in range(generations):
         ants[i][1] /= taoSum
     probStart = 0
     probRate = random()
-    ants.sort(key=lambda x: x[1])
+    ants.sort(key=lambda x: x[1], reverse=True)
+    found = False
     for i in range(len(ants)):
+        prevTao = ants[i][1]
         probStart += ants[i][1]
-        if probStart >= probRate:
-            ants[i][1] = Q / ( 1 / absolute(ants[i][0]) )
+        if probStart >= probRate and not found:
+            best = ants[i]
+            found = True
+            ants[i][1] = Q / (absolute(ants[i][0]))
         else:
             ants[i][1] = 0
-        ants[i][1] = ( (1 - ro) * ants[i][1] ) + taoSum
-    ants.sort(key=lambda x: x[1])
-    best = ants[0][0]
+        ants[i][1] = ( (1 - ro) * ants[i][1] ) + prevTao
+    ants.sort(key=lambda x: x[1], reverse=True)
     print(f"best ({g}): {best}")
-    input()
 
-# print(domain, "\n")
-
-# res = [ [ ants[i], abs(prob[i]) ] for i in range(len(prob)) ]
-# res.sort(key=lambda x: x[1], reverse=True)
-# print("\n", res)
+# print(ants)
